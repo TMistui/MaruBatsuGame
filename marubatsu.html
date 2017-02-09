@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>jQuery練習</title>
+</head>
+<style type="test"></style>
+<body>
+<p>〇×ゲーム的なの(※斜め非対応)</p>
+<p id = "gameEnd" style="display: none;color: black">GAME OVER</p>
+<p id = "redWon" style="display: none;color: red">RED HAS WON</p>
+<p id = "greenWon" style="display: none;color: green">GREEN HAS WON</p>
+<p id = "drawn" style="display: none;color: red">DRAWN</p>
+<input id = "clearButton" type="button" name="clearButton" value="clear" > 
+<table border=1>
+	<tr><th><div id ="box1" class="box" style="width:100px;height: 100px;background: white;"></div>
+	</th><th><div id ="box2" class="box" style="width:100px;height: 100px;background: white"></div>
+	</th><th><div id ="box3" class="box" style="width:100px;height: 100px;background: white"></div>
+	</th></tr>
+	<tr><td><div id ="box4" class="box" style="width:100px;height: 100px;background: white"></div>
+	</td><td><div id ="box5" class="box" style="width:100px;height: 100px;background: white"></div>
+	</td><td><div id ="box6" class="box" style="width:100px;height: 100px;background: white"></div>
+	</td></tr>
+	<tr><td><div id ="box7" class="box" style="width:100px;height: 100px;background: white"></div>
+	</td><td><div id ="box8" class="box" style="width:100px;height: 100px;background: white"></div>
+	</td><td><div id ="box9" class="box" style="width:100px;height: 100px;background: white"></div>
+	</td></tr>
+</table>
+<script src = "http://code.jquery.com/jquery-1.10.1.min.js"></script>
+<script>
+	// N目並べ
+	N=3;
+	//どちらの色の手番かを保持
+	$(function(){
+		var turn = "red";
+		$(".box").click(function(e){
+			box = $("#" + e.target.id);
+
+			// 白じゃないマスを押しても無反応とする
+			if(!eqColor(e.target.id, "white")) return ;
+
+			// haveFinishedの引数に渡す前に変化してしまうため一時的に保存
+			turnTemp = turn;
+
+			if(turn === "red"){
+				box.css('background', 'red');
+				turn = "green";
+			}else if(turn === "green"){
+				box.css('background', 'green');
+				turn = "red";
+			}
+
+			if(haveFinished(turnTemp, e.target.id.slice(-1)-0)){
+				$("#gameEnd").css("display", "block");
+				if( $("#redWon").css("display") == "none"
+					&& $("#greenWon").css("display") == "none" ){ $("#drawn").css("display", "block");}
+			}
+		});
+
+		// clearボタンが押されると、初期状態に戻す
+		$('#clearButton').click(function(){
+			$(".box").css("background", "white");
+			$("#gameEnd").css("display", "none");
+			$("#redWon").css("display", "none");
+			$("#greenWon").css("display", "none");
+			$("#drawn").css("display", "none");
+			turn = "red";
+		});
+
+	});
+	// ゲームが終了したか判定
+	var haveFinished = function(turn, putId){
+
+		// 勝敗が決したとき = どちらかが3つ石を直線に並べたとき
+		bordSize = $(".box").length;
+		length = Math.sqrt(bordSize);
+		haveWon = false;
+		// up
+		var counter = 1;
+		for(var i = putId - length; i > 0; i -= length){
+			if(!eqColor("box" + i, turn)) break;
+			counter++;
+			if(counter == N){ $("#" + turn + "Won").css("display", "block"); return true; }
+		}
+		// down
+		for(var i = putId + length; i < bordSize; i += length){
+			if(!eqColor("box" + i, turn)) break;
+			counter++;
+			if(counter == N){ $("#" + turn + "Won").css("display", "block"); return true; }
+		}
+
+		// left
+		counter = 1;
+		rightMax = miniMultipleOfGreater(putId);
+		leftMin = maxMultipleOfLess(putId);
+		for(var i = putId - 1; i > leftMin; i--){
+			if(!eqColor("box" + i, turn)) break;
+			counter++;
+			if(counter == N){ $("#" + turn + "Won").css("display", "block"); return true; }
+		}
+		// right
+		for(var i = putId + 1; i <= rightMax; i++){
+			if( !eqColor("box" + i, turn) ) break;
+			counter++;
+			if(counter == N){ $("#" + turn + "Won").css("display", "block"); return true; }
+		}
+
+
+		// すべてのマスが塗られたか判定
+		flag = true;
+		$.each($(".box"), 
+			function(index, value){
+				if(value.style.background === "white") flag = false;
+			})
+		return flag;
+	}
+
+	// 第一引数：ID
+	// 第二引数：確認したい色
+	// IDで指定した要素が、確認したい色なのかを判定
+	var eqColor = function(id, color){
+		boxColor = $("#" + id).css('background');
+		switch (color){
+			case "red":
+				return boxColor.slice(0, boxColor.indexOf(")") + 1) === "rgb(255, 0, 0)"
+			case "green":
+				return boxColor.slice(0, boxColor.indexOf(")") + 1) === "rgb(0, 128, 0)"
+			case "white":
+				return boxColor.slice(0, boxColor.indexOf(")") + 1) === "rgb(255, 255, 255)"
+		}
+	}
+
+	// 与えられた数値より大きいNの倍数の中で最小のものを返す
+	var miniMultipleOfGreater = function(input){
+		while(true){
+			if(input % 3 == 0) return input;
+			input++;
+		}
+	}
+
+	// 与えられた数値より小さいNの倍数の中で最大のものを返す
+	var maxMultipleOfLess = function(input){
+		while(true){
+			input--;
+			if(input % 3 == 0) return input;
+		}
+	}
+</script>
+</body>
+</html>
